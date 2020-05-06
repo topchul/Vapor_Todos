@@ -2,6 +2,15 @@ import Fluent
 import Vapor
 
 final class Todo: Model, Content {
+    
+    struct Input: Content {
+        let title: String
+    }
+    struct Output: Content {
+        let id: String
+        let title: String
+    }
+    
     static let schema = "todos"
     
     @ID(key: .id)
