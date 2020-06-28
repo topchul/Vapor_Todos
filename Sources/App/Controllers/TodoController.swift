@@ -1,4 +1,6 @@
 import Fluent
+import SQLKit
+import SQLite3
 import Vapor
 
 struct TodoController {
@@ -30,6 +32,68 @@ struct TodoController {
           -H "Content-Type: application/json"
      */
     func readAll(req: Request) throws -> EventLoopFuture<Page<Todo.Output>> {
+//        let corp_code = "00126380" // 삼성전자
+        let corp_code = "00540447" // 유니테스트
+        
+        let client = DartClient()
+        
+        DispatchQueue.global().async {
+            let company: Company
+            let companyFuture = Company.company(forCorpCode: corp_code, on: req.db)
+            if let dbCompany = try? companyFuture.wait() {
+                // 이전에 획득한 정보를 활용할 것이므로 암것도 안한다.
+                print(corp_code, "[Company] alreay get")
+                company = dbCompany
+                
+            } else if let webCompany = client.getCompany(corp_code: corp_code) {
+                // 웹조회 결과를 저장하자.
+                _ = webCompany.saveIfNotExists(on: req.db)
+                print(corp_code, "[Company] will save that load from web")
+                company = webCompany
+                
+            } else {
+                // 웹조회에 실패으니 끝났다.
+                print(corp_code, "[Company] fail to load from web")
+                return
+                
+            }
+            print("*******\nCompany\n*******",
+                  "\n\(company)\n\n")
+
+            let listItems: [ListItem]
+            // 보고서 목록 조회
+            let maxRceptDt = ListItem.maxRceptDt(forCorpCode: corp_code, on: req.db)
+            if let maxRceptDt = try? maxRceptDt.wait(),
+                DartController.existsReportIn3Months(rceptDt: maxRceptDt) {
+                // 이전에 획득한 정보를 활용할 것이므로 암것도 안한다.
+                print(corp_code, "[Report Item] alreay get")
+                
+                let gregorian = Calendar(identifier: .gregorian)
+                let bgn_year = gregorian.component(.year, from: gregorian.date(byAdding: .year, value: -3, to: Date())!)
+                let end_year = gregorian.component(.year, from: gregorian.date(byAdding: .day, value: 1, to: Date())!)
+                
+                listItems = try! ListItem.listItems(forCorpCode: corp_code, fromRceptDt: "\(bgn_year)0101", toRceptDt: "\(end_year)1231", on: req.db)
+                    .wait()
+                
+            } else if let webListItems = client.getListItems(corp_code: corp_code) {
+                // 웹조회 결과를 저장하자.
+                webListItems.forEach {
+                    _ = $0.saveIfNotExists(on: req.db)
+                }
+                print(corp_code, "[Report Item] will save that load from web")
+                listItems = webListItems
+
+            } else {
+                // 웹조회에 실패했으니 끝났다.
+                print(corp_code, "[Report Item] fail to load from web")
+                return
+                
+            }
+            
+            print("*******\nReports\n*******",
+                  "\n\(listItems.map({ "\($0.corp_code).\($0.rcept_no).\($0.dcm_no ?? "<nil dcm>").\($0.report_nm)" }).joined(separator: "\n") as NSString)\n\n")
+        }
+                
         return Todo.query(on: req.db).paginate(for: req).map { page in
             page.map { Todo.Output(id: $0.id!.uuidString, title: $0.title) }
         }
