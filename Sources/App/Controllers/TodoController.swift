@@ -38,6 +38,12 @@ struct TodoController {
         let client = DartClient()
         
         DispatchQueue.global().async {
+            let corpCodes = client.getCorpCode()
+            corpCodes.forEach {
+                _ = $0.saveIfNotExists(on: req.db)
+                print(".", terminator: "")
+            }
+            
             let company: Company
             let companyFuture = Company.company(forCorpCode: corp_code, on: req.db)
             if let dbCompany = try? companyFuture.wait() {
@@ -52,7 +58,7 @@ struct TodoController {
                 company = webCompany
                 
             } else {
-                // 웹조회에 실패으니 끝났다.
+                // 웹조회에 실패했으니 끝났다.
                 print(corp_code, "[Company] fail to load from web")
                 return
                 

@@ -4,6 +4,7 @@
         <page name='URL'/>
         <page name='RegEx'/>
         <page name='SwiftSoup'/>
+        <page name='XmlParse'/>
         <page name='Untitled Page'/>
         <page name='DateTime'/>
     </pages>

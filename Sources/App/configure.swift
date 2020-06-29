@@ -12,6 +12,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateTodo())
     app.migrations.add(CreateCompany())
     app.migrations.add(CreateListItem())
+    app.migrations.add(CreateCorpCode())
 
     // register routes
     try routes(app)

@@ -16,7 +16,7 @@ struct DartURLs {
 //let crtfc_key_1 = "6b0d8da093bdc9a7f62fa77f33dd2838d196c040" // frank
 let crtfc_key = "9e8dbcdef95ee4a5bfcf3d8b432fb6ff1c98c616" // gregory
 let opendart_fss_or_kr = "opendart.fss.or.kr"
-let opendart_fss_or_kr__api = "https://opendart.fss.or.kr/api/"
+//let opendart_fss_or_kr__api = "https://opendart.fss.or.kr/api/"
 let dart_fss_or_kr = "dart.fss.or.kr"
 
 // page_count = '100'
@@ -258,5 +258,63 @@ class DartClient {
                 return nil
         }
         return String(string[targetRange])
+    }
+    
+    /// 고유번호(CorpCode) 가져오기
+    ///     - api명세: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019018
+    func getCorpCode() -> [CorpCode] {
+        // Basic / bgn_de(시작일)과 dsp_tp(공시타입)를 활용하여 모든 정기공시들을 볼 수 있는 url을 만들고, 이것을 json 형태로 받는다.
+        // https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        // <result>
+        //     <list>
+        //         <corp_code>00434003</corp_code>
+        //         <corp_name>다코</corp_name>
+        //         <stock_code> </stock_code>
+        //         <modify_date>20170630</modify_date>
+        //     </list>
+        //     <list>
+        //         <corp_code>00434456</corp_code>
+        //         <corp_name>일산약품</corp_name>
+        //         <stock_code> </stock_code>
+        //         <modify_date>20170630</modify_date>
+        //     </list>
+        //         ...
+        // </result>
+        
+//        let parameters = ["crtfc_key": crtfc_key]
+//        guard let xmlString = loader.loadString(host: opendart_fss_or_kr, path: "/api/corpCode.xml", parameters: parameters) else {
+        guard let xmlString = try? String(contentsOfFile: "/Users/irontop/Library/Developer/Xcode/DerivedData/Todos-dzeoxedchjefexdcptvuwxxddyge/Build/Products/Debug/CORPCODE.xml") else {
+            print("getCorpCode() failed to load corpCode.xml")
+            return []
+        }
+        
+        var extractedItems: [CorpCode] = []
+        var curItem: CorpCode.Input!
+        var range = xmlString.startIndex..<xmlString.endIndex
+        while let subRange = xmlString.range(of: "<list>|</list>|<(corp_code|corp_name|stock_code|modify_date)>[^<]*", options: .regularExpression, range: range) {
+            let element = xmlString[subRange]
+            switch element {
+            case "<list>":
+                curItem = .init()
+                
+            case "</list>":
+                extractedItems.append(CorpCode(curItem))
+                curItem = nil
+
+            default:
+                let nodes = element.split(separator: ">")
+                switch nodes[0] {
+                case "<corp_code":   curItem.corp_code   = nodes[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                case "<corp_name":   curItem.corp_name   = nodes[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                case "<stock_code":  curItem.stock_code  = nodes[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                case "<modify_date": curItem.modify_date = nodes[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                default:
+                    fatalError()
+                }
+            }
+            range = subRange.upperBound..<range.upperBound
+        }
+        
+        return extractedItems
     }
 }

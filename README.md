@@ -11,6 +11,18 @@ https://theswiftdev.com/get-started-with-the-fluent-orm-framework-in-vapor-4/
 - [ ] 그 다음은 docker 아래 URL을 해보자
 https://theswiftdev.com/server-side-swift-projects-inside-docker-using-vapor-4/
 
+### 2020-06-30
+- [x] 모든 회사의 고유정보 획득하기
+    - [x] CORPCODE.xml - 일단 브라우저로 다운 받은 xml 파일을 로딩해서 db 에 입력했다.
+        * Data(contentsOf:) 로 획득한 데이터는 encoding이 깨져있었다.
+- 재무정보 획득하기
+    - 획득할 값 목록을 정리하기
+    - 획득한 값 DB 스킴 구성하기
+    - SwiftSoup 으로 값 획득하기
+    - 획득한 값 DB 저장하기
+- rim분석
+    - rim 분석이란.?
+
 ### 2020-06-29
 - 모든 회사의 상세정보 획득하기
     - CORPCODE.xml
