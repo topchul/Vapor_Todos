@@ -55,7 +55,14 @@ final class ListItem: Model, Content {
     var rm: String
     @Field(key: "dcm_no")
     var dcm_no: String?
-
+    
+    @Field(key: "year")
+    var year: String
+    @Field(key: "report_type")
+    var report_type: String
+    @Field(key: "modified")
+    var modified: String
+    
     init() { }
     
     init(corp_cls: String,
@@ -67,7 +74,10 @@ final class ListItem: Model, Content {
          flr_nm: String,
          rcept_dt: String,
          rm: String,
-         dcm_no: String?) {
+         dcm_no: String?,
+         year: String,
+         report_type: String,
+         modified: String) {
         
         self.corp_cls   = corp_cls
         self.corp_name  = corp_name
@@ -79,6 +89,10 @@ final class ListItem: Model, Content {
         self.rcept_dt   = rcept_dt
         self.rm         = rm
         self.dcm_no     = dcm_no
+        
+        self.year        = year
+        self.report_type = report_type
+        self.modified    = modified
     }
     
     var description: String {
@@ -93,6 +107,11 @@ final class ListItem: Model, Content {
         builder.append("rcept_dt(\(rcept_dt))")
         builder.append("rm(\(rm))")
         builder.append("dcm_no(\(dcm_no ?? "<not yet>"))")
+        
+        builder.append("year\(year)")
+        builder.append("report_type\(report_type)")
+        builder.append("modified\(modified)")
+        
         return "ListItem(" + builder.joined(separator: " ") + ")"
     }
 }

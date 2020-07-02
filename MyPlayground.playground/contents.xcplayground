@@ -2,10 +2,11 @@
 <playground version='6.0' target-platform='macos'>
     <pages>
         <page name='URL'/>
-        <page name='RegEx'/>
+        <page name='Excercise_Requests'/>
         <page name='SwiftSoup'/>
         <page name='XmlParse'/>
         <page name='Untitled Page'/>
         <page name='DateTime'/>
+        <page name='ParseReportTitle'/>
     </pages>
 </playground>

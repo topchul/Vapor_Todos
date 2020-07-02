@@ -215,18 +215,45 @@ class DartClient {
         
         var items: [ListItem] = .init()
         for item in list {
-            let dcmNo = getDcmNo(rcpNo: item["rcept_no"]!)
-            
-            items.append(ListItem(corp_cls:   item["corp_cls"]!,
-                                  corp_name:  item["corp_name"]!,
-                                  corp_code:  item["corp_code"]!,
-                                  stock_code: item["stock_code"]!,
-                                  report_nm:  item["report_nm"]!,
-                                  rcept_no:   item["rcept_no"]!,
-                                  flr_nm:     item["flr_nm"]!,
-                                  rcept_dt:   item["rcept_dt"]!,
-                                  rm:         item["rm"]!,
-                                  dcm_no:     dcmNo))
+            do {
+                let report_nm = item["report_nm"]!
+                // 0(전체), 1(분기|반기|사업), 2(년), 3(월)
+                let reportTypeRegEx = try NSRegularExpression(pattern: "(분기|반기|사업).*([0-9]{4}).([0-9]{2})", options: [])
+                let matches = reportTypeRegEx.matches(in: report_nm, options: .reportCompletion, range: NSRange(location: 0, length: (report_nm as NSString).length))
+                let match = matches[0]
+                
+                let year = (report_nm as NSString).substring(with: match.range(at: 2))
+                let quarter = "\(Int((report_nm as NSString).substring(with: match.range(at: 3)))! / 3)"
+                let report_type: String
+                switch (report_nm as NSString).substring(with: match.range(at: 1)) {
+                case "분기": report_type = "Q" + quarter
+                case "반기": report_type = "S" + quarter
+                case "사업": report_type = "A" + quarter
+                default:    report_type = "U" + quarter
+                }
+                
+                let modifiedRegEx = try NSRegularExpression(pattern: "기\\s*재\\s*정\\s*정", options: [])
+                let modified = (modifiedRegEx.matches(in: report_nm, options: .reportCompletion, range: NSRange(location: 0, length: (report_nm as NSString).length)).count > 0 ? "M": "");
+                
+                let dcmNo = getDcmNo(rcpNo: item["rcept_no"]!)
+                
+                items.append(ListItem(corp_cls:    item["corp_cls"]!,
+                                      corp_name:   item["corp_name"]!,
+                                      corp_code:   item["corp_code"]!,
+                                      stock_code:  item["stock_code"]!,
+                                      report_nm:   item["report_nm"]!,
+                                      rcept_no:    item["rcept_no"]!,
+                                      flr_nm:      item["flr_nm"]!,
+                                      rcept_dt:    item["rcept_dt"]!,
+                                      rm:          item["rm"]!,
+                                      dcm_no:      dcmNo,
+                                      year:        year,
+                                      report_type: report_type,
+                                      modified:    modified)
+                )
+            } catch {
+                print(error)
+            }
         }
         
         return items
