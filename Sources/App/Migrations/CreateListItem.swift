@@ -20,7 +20,7 @@ struct CreateListItem: Migration {
             .field("flr_nm",      .string, .required)
             .field("rcept_dt",    .string, .required)
             .field("rm",          .string, .required)
-            .field(.definition(name: .key("dcm_no"), dataType: .string, constraints: []))
+            .field("dcm_no",      .string)
             .field("year",        .string, .required)
             .field("report_type", .string, .required)
             .field("modified",    .string, .required)

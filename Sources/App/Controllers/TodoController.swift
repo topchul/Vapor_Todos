@@ -32,18 +32,22 @@ struct TodoController {
           -H "Content-Type: application/json"
      */
     func readAll(req: Request) throws -> EventLoopFuture<Page<Todo.Output>> {
-//        let corp_code = "00126380" // 삼성전자
-        let corp_code = "00540447" // 유니테스트
+        let corp_code = "00126380" // 삼성전자
+//        let corp_code = "00540447" // 유니테스트
         
         let client = DartClient()
         
         DispatchQueue.global().async {
-            let corpCodes = client.getCorpCode()
-            corpCodes.forEach {
-                _ = $0.saveIfNotExists(on: req.db)
-                print(".", terminator: "")
-            }
+            //
+            // * CoreCode 정리
+//            let corpCodes = client.getCorpCode()
+//            corpCodes.forEach {
+//                _ = $0.saveIfNotExists(on: req.db)
+//                print(".", terminator: "")
+//            }
             
+            //
+            // * 기업개황 조회
             let company: Company
             let companyFuture = Company.company(forCorpCode: corp_code, on: req.db)
             if let dbCompany = try? companyFuture.wait() {
@@ -65,9 +69,10 @@ struct TodoController {
             }
             print("*******\nCompany\n*******",
                   "\n\(company)\n\n")
-
+            
+            //
+            // * 보고서 목록 조회
             let listItems: [ListItem]
-            // 보고서 목록 조회
             let maxRceptDt = ListItem.maxRceptDt(forCorpCode: corp_code, on: req.db)
             if let maxRceptDt = try? maxRceptDt.wait(),
                 DartController.existsReportIn3Months(rceptDt: maxRceptDt) {
@@ -95,9 +100,17 @@ struct TodoController {
                 return
                 
             }
-            
             print("*******\nReports\n*******",
                   "\n\(listItems.map({ "\($0.corp_code).\($0.rcept_no).\($0.dcm_no ?? "<nil dcm>").\($0.report_nm)" }).joined(separator: "\n") as NSString)\n\n")
+            
+            print("*******\nDetail Reports\n*******")
+            let last4QuarterItems = listItems[max(0, listItems.count - 4)..<listItems.count]
+            
+            last4QuarterItems.forEach { item in
+                print("* \(item.corp_code).\(item.rcept_no).\(item.dcm_no ?? "<nil dcm>").\(item.report_nm) *")
+                client.getDoucment(rceptNo: item.rcept_no, dcmNo: item.dcm_no!, modified: item.modified)
+            }
+            
         }
                 
         return Todo.query(on: req.db).paginate(for: req).map { page in

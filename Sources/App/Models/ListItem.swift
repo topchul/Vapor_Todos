@@ -24,6 +24,14 @@
 //                              연(연결부분을 포함)
 //                              정(정정된 관련 보고서 참조)
 //                              철(철회신고서(철회간주안내)를 참고)
+//  Unique
+//    corp_code
+//    year
+//    report_type
+//    rcept_no
+//
+//    modified
+//    report_nm
 
 import Fluent
 import Foundation

@@ -8,5 +8,6 @@
         <page name='Untitled Page'/>
         <page name='DateTime'/>
         <page name='ParseReportTitle'/>
+        <page name='ParseHeaderTable'/>
     </pages>
 </playground>

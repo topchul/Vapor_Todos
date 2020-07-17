@@ -8,6 +8,7 @@
 //      일단 프랭코드의 접근 방법과 동일하게 진행해보자. 조금 중복이나더라도. 조금 이상하더라도.
 
 import Foundation
+import SwiftSoup
 
 struct DartURLs {
     
@@ -287,6 +288,205 @@ class DartClient {
         return String(string[targetRange])
     }
     
+    /// 보고서 문서 가져오기
+    ///     - 문서 URL:
+    func getDoucment(rceptNo: String, dcmNo: String, modified: String) -> Document? {
+        // http://dart.fss.or.kr/report/viewer.do?rcpNo=20200330004543&dcmNo=7206919&length=20000&offset=20000&eleId=7
+        let basePageNo = (modified == "M" ? 2: 0)
+        
+        var parameters =  [
+            "rcpNo":  rceptNo,
+            "dcmNo":  dcmNo,
+            "length": "20000",
+            "offset": "20000",
+        ]
+        parameters["eleId"] = "\(basePageNo + 7)"
+        let paramPage7 = parameters
+        parameters["eleId"] = "\(basePageNo + 9)"
+        let paramPage9 = parameters
+        parameters["eleId"] = "\(basePageNo + 13)"
+        let paramPage13 = parameters
+
+        guard let page7 = loader.loadString(host: dart_fss_or_kr, path: "/report/viewer.do", parameters: paramPage7),
+            let page9 = loader.loadString(host: dart_fss_or_kr, path: "/report/viewer.do", parameters: paramPage9),
+            let page13 = loader.loadString(host: dart_fss_or_kr, path: "/report/viewer.do", parameters: paramPage13)
+            else {
+                return nil
+        }
+        
+        let nf = NumberFormatter()
+        nf.numberStyle = .decimal
+        do {
+            print("\n***** rceptNo: \(rceptNo), dcmNo: \(dcmNo), modified: \(modified) ******")
+            
+//            let page13Doc = try SwiftSoup.parse(page13)
+//            /// 자산 - `p13.연결재무제표-재무상태표:자본.부채총계|부채.자본총계|자본.부채.총계|부채.자본.총계`
+//            ///   - 분기보고서: - 계정명/ 1분기말/
+//            ///   - 반기보고서: - 계정명/ 반기말/ 전년기말/ 전전년기말
+//            let assetTDs = try page13Doc.gr_tr(text: "자본.부채총계|부채.자본총계|자본.부채.총계|부채.자본.총계")!
+//            print("\n***** assetTDs ******")
+//            print(try assetTDs.html())
+//
+//            /// 재무활동 현금흐름 - `p13.연결재무제표-현금흐름표:재무활동.*현금흐름|재무활동.*현금흐름.합계`
+//            ///   - 반기보고서: - 계정명/ 반기/ 전기반기/ 전기/ 전전기
+//            let cashflowFinancingTDs = try page13Doc.gr_tr(text: "재무활동.*현금흐름|재무활동.*현금흐름.합계")!
+//            print("\n***** cashflowFinancingTDs ******")
+//            print(try cashflowFinancingTDs.html())
+//
+//            /// 투자활동 현금흐름 - `p13.연결재무제표-현금흐름표:투자활동.*현금흐름|투자활동.*현금흐름.합계`
+//            ///   - 반기보고서: - 계정명/ 반기/ 전기반기/ 전기/ 전전기
+//            let cashflowInvestingTDs = try page13Doc.gr_tr(text: "투자활동.*현금흐름|투자활동.*현금흐름.합계")!
+//            print("\n***** cashflowInvestingTDs ******")
+//            print(try cashflowInvestingTDs.html())
+//
+//            /// 영업활동 현금흐름 - `p13.연결재무제표-현금흐름표:영업활동.*현금흐름|영업활동.*현금흐름.합계`
+//            ///   - 반기보고서: - 계정명/ 반기/ 전기반기/ 전기/ 전전기
+//            let cashflowOperatingTDs = try page13Doc.gr_tr(text: "영업활동.*현금흐름|영업활동.*현금흐름.합계")!
+//            print("\n***** cashflowOperatingTDs ******")
+//            print(try cashflowOperatingTDs.html())
+//
+//            /// 자본(지배) - `p13.연결재무제표-재무상태표:자본총계` 또는 `p13.연결재무제표:자본`
+//            ///   - 반기보고서: - 계정명/ 반기말/ 전기말/ 전전기말
+//            let equity = try page13Doc.gr_tr(text: "자본총계")!
+//            print("\n***** equity ******")
+//            print(try equity.html())
+//
+//            /// 금융비용 / 금융원가 - `p13.연결재무제표-포괄손익계산서:금융비용|금융.비용|금융원가|금융.원가`
+//            ///   - 반기보고서: - 계정명/ 반기3개월/ 반기누적/ 전기반기3개월/ 전기반기누적/ 전기/ 전전기
+//            let interestExpense = try page13Doc.gr_tr(text: "금융비용|금융.비용|금융원가|금융.원가")!
+//            print("\n***** interestExpense ******")
+//            print(try interestExpense.html())
+//
+//            /// 영업이익- `p13.연결재무제표-포괄손익계산서:영업이익`
+//            let operatingIncome = try page13Doc.gr_tr(text: "영업이익")!
+//            print("\n***** operatingIncome ******")
+//            print(try operatingIncome.html())
+//
+//            /// 순이익: - Y:`p13.연결재무제표-포괄손익계산서:당기순.익.*귀속|당기순.익|당기순.익` - Q:`p13.연결재무제표:당기순.익.*귀속|당기순.익|분기순.익.*귀속|분기순.익|반기순.익.*귀속|반기순.익`
+//            let profit = try page13Doc.gr_tr(text: "당기순.익.*귀속|당기순.익|당기순.익")!
+//            print("\n***** profit ******")
+//            print(try profit.html())
+//
+//            /// 매출 - `p13.연결재무제표-포괄손익계산서:매출액|영업수익|I\.매출\s|매출\s`
+//            let sails = try page13Doc.gr_tr(text: "매출액|영업수익|I\\.매출\\s|매출\\s")!
+//            print("\n***** sails ******")
+//            print(try sails.html())
+//
+//            let page7Doc = try SwiftSoup.parse(page7)
+//            /// 유통주식수 - `p7.주식의총수등:유통주식수`
+//            ///   - 구분/ 보통주/ 우선주/ 합계/ 비고 // 끝에서 두번째(-2)
+//            let shares = try page7Doc.gr_tdValue(text: "유통주식수", tdIndex: -2)!
+//            print("\n***** shares ******")
+//            print(shares)
+//
+//            let page9Doc = try SwiftSoup.parse(page9)
+//            /// 현금배당수익률 - `p9.배당에관한사항등:현금배당수익률`
+//            ///   - 반기보고서: - 구분/ 주식의종류/ 전기/ 전전기/ 전전전기
+//            let dividend = try page9Doc.gr_tr(text: "현금배당수익률")!
+//            print("\n***** dividend ******")
+//            print(try dividend.html())
+            
+            // 내맘대로 분석
+            let page13Doc2 = try SwiftSoup.parse(page13)
+            try parsePage13(doc: page13Doc2)
+            
+        } catch {
+            print(error)
+            return nil
+        }
+        
+        return nil
+    }
+    
+    func parsePage13(doc: SwiftSoup.Document) throws {
+//        Financial
+//          unit: 1_000_000
+//          period
+//            51 기 at: 2019-12-31
+//              equity: ...
+//              asset: ...
+//            50 기 at: 2018-12-31
+//              equity: ...
+//              asset: ...
+//        Income
+//          unit: 1_000_000
+//          period
+//            51 기 from: 2019-01-01 ~ 2019-12-31
+//              profit: ...
+//        Cashflow
+//          uint: 1_000_000
+//          period
+//            51 기 from: 2019-01-01 ~ 2019-12-31
+//              profit: ...
+        
+//        var parseTree: [String: String] = [:]
+        
+        let headerTables = try doc.select("table[class=nb]")
+        try headerTables.forEach { table in
+            let tds = try table.select("td")
+            // 주석제거를 위해서 "단위"를 가진 경우만 통과
+            guard let unitValueTD = tds.last(), 0 < (try unitValueTD.gr_elements(matches: "단위")).count else {
+                return
+            }
+            
+            let title = try tds[0].text()
+            let pattern = [ "(?<Financial>", "재무상태표".gr_regExAppendRuleAcceptAnyWhiteSpaces, ")|",
+                            "(?<Income>",    "손익계산서".gr_regExAppendRuleAcceptAnyWhiteSpaces, ")|",
+                            "(?<Cashflow>",  "현금흐름표".gr_regExAppendRuleAcceptAnyWhiteSpaces, ")"]
+                .joined()
+            let titleKindRegEx = try NSRegularExpression(pattern: pattern, options: [])
+            let result = titleKindRegEx.matches(in: title, options: .reportProgress, range: NSRange(location: 0, length: title.count))
+            guard let match = result.first else {
+                return
+            }
+            
+            if NSNotFound != match.range(withName: "Financial").location {
+                fatalError("여기하던 중.")
+                print("--재무상태표 분석하기")
+                parseFinancialStatements(headerTable: table)
+            } else if NSNotFound != match.range(withName: "Income").location {
+                print("--손익계산서 분석하기")
+            } else if NSNotFound != match.range(withName: "Cashflow").location {
+                print("--현금흐름표 분석하기")
+            }
+            
+            print("***", try tds.html())
+            print("title:", title)
+            print(":", try unitValueTD.text())
+            
+        }
+    }
+    func parseFinancialStatements(headerTable: Element) {
+//        연결 재무상태표
+//        제 51 기 1분기말 2019.03.31 현재
+//        제 50 기말          2018.12.31 현재
+//        (단위 : 백만원)
+
+//        연결 재무상태표
+//        제 51 기 반기말 2019.06.30 현재
+//        제 50 기말        2018.12.31 현재
+//        (단위 : 백만원)
+
+//        연결 재무상태표
+//        제 51 기 3분기말 2019.09.30 현재
+//        제 50 기말          2018.12.31 현재
+//        (단위 : 백만원)
+
+//        연결 재무상태표
+//        제 51 기          2019.12.31 현재
+//        제 50 기          2018.12.31 현재
+//        제 49 기          2017.12.31 현재
+//        (단위 : 백만원)
+        
+
+
+        // 자본.부채총계|부채.자본총계|자본.부채.총계|부채.자본.총계
+        // 자본(총계|)
+    }
+//    Income tatement
+//    CashflowStatement
+
+
     /// 고유번호(CorpCode) 가져오기
     ///     - api명세: https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS001&apiId=2019018
     func getCorpCode() -> [CorpCode] {
